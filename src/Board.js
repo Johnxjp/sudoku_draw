@@ -19,13 +19,22 @@ export default class Board extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      board: this.createBoard(),
-      selectedSquare: null
+      board: [],
+      selectedSquare: null,
+      fixedCells: []
     };
   }
 
-  createBoard() {
-    return TEST_BOARD;
+  componentDidMount() {
+    this.initialiseBoard();
+  }
+
+  initialiseBoard() {
+    const fixedCells = TEST_BOARD.flat()
+      .map((val, index) => (val === 0 ? null : index))
+      .filter(val => val !== null);
+
+    this.setState({ board: TEST_BOARD, fixedCells });
   }
 
   onSquareClick(id) {
@@ -37,14 +46,18 @@ export default class Board extends React.Component {
     return boardData.map((row, index_i) => {
       return (
         <tr>
-          {row.map((digit, index_j) => (
-            <Square
-              id={index_i * BOARD_SIZE + index_j}
-              value={digit === 0 ? null : digit}
-              isSelected={this.state.selectedSquare}
-              onClick={id => this.onSquareClick(id)}
-            />
-          ))}
+          {row.map((digit, index_j) => {
+            const id = index_i * BOARD_SIZE + index_j;
+            return (
+              <Square
+                id={id}
+                value={digit === 0 ? null : digit}
+                isSelected={this.state.selectedSquare === id}
+                onClick={id => this.onSquareClick(id)}
+                isFixed={this.state.fixedCells.includes(id)}
+              />
+            );
+          })}
         </tr>
       );
     });

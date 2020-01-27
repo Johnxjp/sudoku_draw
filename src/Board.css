@@ -7,14 +7,18 @@ td {
   font-size: larger;
 }
 
-td:hover {
-  border: 1px orangered dotted;
-}
-
 table {
   border-spacing: 0em;
 }
 
 .selected {
   border: 1px orangered solid;
+}
+
+.clickable-square:hover {
+  border: 1px orangered dotted;
+}
+
+.fixed-square {
+  background-color: lightslategrey;
 }
