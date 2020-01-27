@@ -8,13 +8,13 @@ td {
 }
 
 td:hover {
-  border: 1px black dotted;
+  border: 1px orangered dotted;
 }
 
 table {
   border-spacing: 0em;
 }
 
-td:active {
+.selected {
   border: 1px orangered solid;
 }
