@@ -1,6 +1,9 @@
 import React from "react";
-import "./Board.css";
 import Square from "./Square";
+import CanvasDraw from "react-canvas-draw";
+
+import "./Board.css";
+import "./Canvas.css";
 
 const BOARD_SIZE = 9;
 const TEST_BOARD = [
@@ -15,13 +18,21 @@ const TEST_BOARD = [
   [0, 0, 0, 0, 8, 0, 0, 7, 9]
 ];
 
+const canvasProps = {
+  brushRadius: 5,
+  lazyRadius: 2,
+  hideGrid: true,
+  brushColor: "black"
+};
+
 export default class Board extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       board: [],
       selectedSquare: null,
-      fixedCells: []
+      fixedCells: [],
+      canvas: React.createRef()
     };
   }
 
@@ -63,11 +74,43 @@ export default class Board extends React.Component {
     });
   }
 
+  getbase64PNG(context) {
+    let base64Data = context.drawing.canvas.toDataURL();
+    return base64Data.match(/base64,(.*)/)[1];
+  }
+
+  setImg() {
+    const lines = this.canvas.lines;
+    if (lines.length > 0) {
+      const context = this.canvas.ctx;
+      const base64Data = this.getbase64PNG(context);
+      return base64Data;
+    } else {
+      return null;
+    }
+  }
+
   render() {
+    console.log(this.canvas === undefined ? null : this.canvas.current);
     return (
-      <table>
-        <tbody>{this.drawBoard(this.state.board)}</tbody>
-      </table>
+      <>
+        <table>
+          <tbody>{this.drawBoard(this.state.board)}</tbody>
+        </table>
+        <div id="canvas-square">
+          <CanvasDraw
+            {...canvasProps}
+            className="canvas-square"
+            ref={canvas => {
+              this.canvas = canvas;
+              console.log(canvas);
+            }}
+          />
+          <button onClick={() => this.canvas.clear()}>Clear</button>
+          <button onClick={() => this.canvas.undo()}>Undo</button>
+          <button onClick={() => this.setImg()}>Submit</button>
+        </div>
+      </>
     );
   }
 }
