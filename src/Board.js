@@ -1,6 +1,7 @@
 import React from "react";
 import Square from "./Square";
 import CanvasDraw from "react-canvas-draw";
+import { getRandomInt } from "./Utils";
 
 import "./Board.css";
 import "./Canvas.css";
@@ -50,6 +51,10 @@ export default class Board extends React.Component {
 
   onSquareClick(id) {
     console.log("Chosen square", id);
+    if (id !== this.state.selectedSquare) {
+      // Clear canvas
+      this.canvas.clear();
+    }
     this.setState({ selectedSquare: id });
   }
 
@@ -79,15 +84,51 @@ export default class Board extends React.Component {
     return base64Data.match(/base64,(.*)/)[1];
   }
 
-  setImg() {
+  getBoardCoords(squareId) {
+    const x = parseInt(squareId / BOARD_SIZE);
+    const y = squareId % BOARD_SIZE;
+    return [x, y];
+  }
+
+  evaluate() {
     const lines = this.canvas.lines;
-    if (lines.length > 0) {
+    // TODO: Remove geq
+    if (lines.length >= 0) {
       const context = this.canvas.ctx;
       const base64Data = this.getbase64PNG(context);
-      return base64Data;
+      this.getPrediction(base64Data)
+        .then(data => {
+          if (data.value == 0) {
+            console.log("Couldn't understand input");
+          } else {
+            console.log("Predicted value", data.value);
+            const [x, y] = this.getBoardCoords(this.state.selectedSquare);
+            const board = this.state.board;
+            board[x][y] = data.value;
+            this.setState({ board });
+          }
+        })
+        .catch(err => console.log(err));
     } else {
       return null;
     }
+  }
+
+  async getPrediction(base64Data) {
+    return new Promise((resolve, _) => {
+      const val = getRandomInt(0, BOARD_SIZE + 1);
+      console.log("Generated Num", val);
+      resolve({ value: val });
+    });
+    // const url = "http://localhost:8000/predict";
+    // const response = fetch(url, {
+    //   method: "POST",
+    //   headers: {
+    //     "Content-Type": "application/json"
+    //   },
+    //   body: JSON.stringify({ data: base64Data })
+    // });
+    // return await response.json();
   }
 
   render() {
@@ -108,7 +149,7 @@ export default class Board extends React.Component {
           />
           <button onClick={() => this.canvas.clear()}>Clear</button>
           <button onClick={() => this.canvas.undo()}>Undo</button>
-          <button onClick={() => this.setImg()}>Submit</button>
+          <button onClick={() => this.evaluate()}>Submit</button>
         </div>
       </>
     );
