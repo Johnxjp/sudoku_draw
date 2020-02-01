@@ -9,16 +9,5 @@ td {
 
 table {
   border-spacing: 0em;
-}
-
-.selected {
-  border: 1px orangered solid;
-}
-
-.clickable-square:hover {
-  border: 1px orangered dotted;
-}
-
-.fixed-square {
-  background-color: lightgray;
+  border: 2px black solid;
 }

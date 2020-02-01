@@ -1,0 +1,35 @@
+.sidebar {
+  padding-top: 50px;
+  padding-left: 1em;
+  padding-right: 1em;
+  padding-bottom: 0px;
+  width: 350px;
+  height: 100vh;
+  min-width: 350px;
+  background-color: #29b6f6;
+  color: whitesmoke;
+  border-right: 1px black solid;
+  font-size: small;
+}
+
+#app-title {
+  margin: 0em;
+  font-size: xx-large;
+}
+
+.app-subtitle {
+  font-size: large;
+}
+
+p {
+  font-weight: normal;
+}
+
+a:visited {
+  text-decoration: none;
+}
+
+a {
+  text-decoration: underline;
+  color: orange;
+}

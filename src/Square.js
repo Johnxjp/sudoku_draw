@@ -1,4 +1,5 @@
 import React from "react";
+import "./Square.css";
 
 function setClass(isFixed, isSelected) {
   if (!isFixed && !isSelected) {

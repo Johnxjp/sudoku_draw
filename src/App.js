@@ -6,9 +6,11 @@ import Sidebar from "./Sidebar";
 export default function App() {
   return (
     <div id="container">
-      {/* <Sidebar /> */}
-      <Board />
-      {/* <Canvas /> */}
+      <Sidebar />
+      <div id="main">
+        <Board />
+        {/* <Canvas /> */}
+      </div>
     </div>
   );
 }

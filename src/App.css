@@ -1,4 +1,10 @@
 #container {
   display: flex;
+  background-color: white;
+}
+
+#main {
+  display: flex;
   padding: 50px;
+  min-width: 800px;
 }
