@@ -43,11 +43,16 @@ export default class Board extends React.Component {
   }
 
   initialiseBoard() {
-    const fixedCells = TEST_BOARD.flat()
+    const flatBoard = TEST_BOARD.flat();
+    const fixedCells = flatBoard
       .map((val, index) => (val === 0 ? null : index))
       .filter(val => val !== null);
-
-    this.setState({ board: TEST_BOARD, fixedCells });
+    const firstEmpty = flatBoard.findIndex(el => el === 0);
+    this.setState({
+      board: TEST_BOARD,
+      fixedCells,
+      selectedSquare: firstEmpty
+    });
   }
 
   onSquareClick(id) {
@@ -137,7 +142,6 @@ export default class Board extends React.Component {
   }
 
   render() {
-    console.log(this.canvas === undefined ? null : this.canvas.current);
     return (
       <>
         <table>
@@ -149,7 +153,6 @@ export default class Board extends React.Component {
             className="canvas"
             ref={canvas => {
               this.canvas = canvas;
-              console.log(canvas);
             }}
           />
           <button onClick={() => this.canvas.clear()}>Clear</button>

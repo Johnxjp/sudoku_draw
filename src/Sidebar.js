@@ -8,7 +8,12 @@ const Sidebar = () => (
     <h1 id="app-title">Sudoku Draw</h1>
     <p>
       Sudoku Draw is an implementation of Sudoku with a slight spin. Instead of
-      typing digits in, you must draw the numbers using the canvas.
+      typing digits in, you must draw the numbers using the canvas.{" "}
+      <em>
+        Simply click on the cell you want to fill and draw the image in the
+        canvas
+      </em>
+      .
     </p>
     <h2 className="app-subtitle">How it works?</h2>
     <p>
@@ -54,9 +59,9 @@ const Sidebar = () => (
     </p>
     <h2 className="app-subtitle">Example Drawing</h2>
     <p>
-      While the probability of incorrect predictions are reduced with
-      centering and using MC Dropout, try to draw the digits large and in the
-      center. Here's a good example.
+      While the probability of incorrect predictions are reduced with centering
+      and using MC Dropout, try to draw the digits large and in the center.
+      Here's a good example.
     </p>
     <img src={ExampleImage} alt="" height="200px" />
   </aside>
