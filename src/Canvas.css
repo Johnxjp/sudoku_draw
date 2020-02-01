@@ -1,3 +1,7 @@
-.canvas-square {
+.canvas {
   border: 3px black solid;
+}
+
+#canvas-container {
+  margin-left: 50px;
 }

@@ -1,7 +1,6 @@
 import React from "react";
 import Square from "./Square";
 import CanvasDraw from "react-canvas-draw";
-import { getRandomInt } from "./Utils";
 
 import "./Board.css";
 import "./Canvas.css";
@@ -20,10 +19,12 @@ const TEST_BOARD = [
 ];
 
 const canvasProps = {
-  brushRadius: 5,
-  lazyRadius: 2,
+  brushRadius: 18,
+  lazyRadius: 1,
   hideGrid: true,
-  brushColor: "black"
+  brushColor: "black",
+  canvasWidth: 196,
+  canvasHeight: 196
 };
 
 export default class Board extends React.Component {
@@ -98,13 +99,16 @@ export default class Board extends React.Component {
       const base64Data = this.getbase64PNG(context);
       this.getPrediction(base64Data)
         .then(data => {
-          if (data.value == 0) {
+          const prediction = data.prediction;
+          if (prediction < 0) {
             console.log("Couldn't understand input");
+          } else if (prediction === 0) {
+            console.log("Not a valid value");
           } else {
-            console.log("Predicted value", data.value);
+            console.log("Predicted value", prediction);
             const [x, y] = this.getBoardCoords(this.state.selectedSquare);
             const board = this.state.board;
-            board[x][y] = data.value;
+            board[x][y] = prediction;
             this.setState({ board });
           }
         })
@@ -115,20 +119,21 @@ export default class Board extends React.Component {
   }
 
   async getPrediction(base64Data) {
-    return new Promise((resolve, _) => {
-      const val = getRandomInt(0, BOARD_SIZE + 1);
-      console.log("Generated Num", val);
-      resolve({ value: val });
-    });
-    // const url = "http://localhost:8000/predict";
-    // const response = fetch(url, {
-    //   method: "POST",
-    //   headers: {
-    //     "Content-Type": "application/json"
-    //   },
-    //   body: JSON.stringify({ data: base64Data })
+    // return new Promise((resolve, _) => {
+    //   const val = getRandomInt(0, BOARD_SIZE + 1);
+    //   console.log("Generated Num", val);
+    //   resolve({ value: val });
     // });
-    // return await response.json();
+    const url = "http://localhost:3001/predict";
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "http://localhost/3001"
+      },
+      body: JSON.stringify({ data: base64Data })
+    });
+    return await response.json();
   }
 
   render() {
@@ -138,10 +143,10 @@ export default class Board extends React.Component {
         <table>
           <tbody>{this.drawBoard(this.state.board)}</tbody>
         </table>
-        <div id="canvas-square">
+        <div id="canvas-container">
           <CanvasDraw
             {...canvasProps}
-            className="canvas-square"
+            className="canvas"
             ref={canvas => {
               this.canvas = canvas;
               console.log(canvas);

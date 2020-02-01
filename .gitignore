@@ -4,6 +4,7 @@
 /node_modules
 /.pnp
 .pnp.js
+__pycache__
 
 # testing
 /coverage
@@ -24,3 +25,5 @@ yarn-error.log*
 
 
 .vscode
+/notebooks
+/model/MNIST

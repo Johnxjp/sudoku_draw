@@ -1,117 +1,99 @@
-import tensorflow as tf
-from tensorflow.keras.layers import Dense, Flatten, Conv2D, Dropout
-from tensorflow.keras import Model
-
-
-mnist = tf.keras.datasets.mnist
-
-
-def normalise(x):
-    return (x / 255.0) * 2 - 1
+import torch
+import torchvision
+from torchvision import transforms
+import torch.nn as nn
+import torch.optim as optim
+import torch.nn.functional as F
+from torch.utils.data import DataLoader
+import numpy as np
 
 
 def load_data():
-    (x_train, y_train), (x_test, y_test) = mnist.load_data()
-    x_train = preprocess(x_train)
-    x_test = preprocess(x_test)
+    transform = transforms.Compose(
+        [
+            transforms.RandomAffine(degrees=(-30, 30), translate=(0.2, 0.2)),
+            transforms.ToTensor(),
+            transforms.Normalize((0.1307,), (0.3081,)),
+        ]
+    )
+    train = torchvision.datasets.MNIST(
+        "./model", train=True, download=True, transform=transform
+    )
+    test = torchvision.datasets.MNIST(
+        "./model", train=False, download=True, transform=transform
+    )
+    return train, test
 
-    return (x_train, y_train), (x_test, y_test)
 
-
-def preprocess(x):
-    x = normalise(x)
-    x = x[..., tf.newaxis]
-    return x
-
-
-class MnistModel(Model):
+class CNN(nn.Module):
     def __init__(self):
         super().__init__()
-        self.conv1 = Conv2D(32, 3, activation="relu")
-        self.flatten = Flatten()
-        self.d1 = Dense(128, activation="relu")
-        self.dropout = Dropout(0.25)
-        self.d2 = Dense(10, activation="softmax")
+        self.img_h = 28
+        self.img_w = 28
+        self.out_channels = 32
+        self.conv1 = nn.Conv2d(1, self.out_channels, 3)
+        self.pool1 = nn.MaxPool2d(2, 2)
+        self.flat = nn.Flatten()
+        self.fc1 = nn.Linear(13 * 13 * self.out_channels, 128)
+        self.fc2 = nn.Linear(128, 10)
+        self.dropout = nn.Dropout(p=0.5)
 
-    def call(self, x):
-        x = self.conv1(x)
-        x = self.flatten(x)
-        x = self.d1(x)
+    def forward(self, x):
+        x = self.pool1(F.relu(self.conv1(x)))
+        x = self.flat(x)
+        x = self.fc1(x)
         x = self.dropout(x)
-        return self.d2(x)
-
-
-@tf.function
-def train_step(images, labels):
-    with tf.GradientTape() as tape:
-        # training=True is only needed if there are layers with different
-        # behavior during training versus inference (e.g. Dropout).
-        predictions = model(images, training=True)
-        loss = loss_object(labels, predictions)
-    gradients = tape.gradient(loss, model.trainable_variables)
-    optimizer.apply_gradients(zip(gradients, model.trainable_variables))
-
-    train_loss(loss)
-    train_accuracy(labels, predictions)
-
-
-@tf.function
-def test_step(images, labels):
-    # training=False is only needed if there are layers with different
-    # behavior during training versus inference (e.g. Dropout).
-    predictions = model(images, training=False)
-    t_loss = loss_object(labels, predictions)
-
-    test_loss(t_loss)
-    test_accuracy(labels, predictions)
+        x = self.fc2(x)
+        return x
 
 
 if __name__ == "__main__":
-    (x_train, y_train), (x_test, y_test) = load_data()
-    train_ds = (
-        tf.data.Dataset.from_tensor_slices((x_train, y_train))
-        .shuffle(10000)
-        .batch(32)
-    )
+    train, test = load_data()
+    batch_size = 64
+    shuffle = True
+    train_dl = DataLoader(train, batch_size=batch_size, shuffle=shuffle)
+    test_dl = DataLoader(test, batch_size=batch_size, shuffle=shuffle)
 
-    test_ds = tf.data.Dataset.from_tensor_slices((x_test, y_test)).batch(32)
-    model = MnistModel()
+    loss_criterion = nn.CrossEntropyLoss()
+    model = CNN()
+    optimiser = optim.Adam(model.parameters())
 
-    loss_object = tf.keras.losses.SparseCategoricalCrossentropy()
-    optimizer = tf.keras.optimizers.Adam()
-    train_loss = tf.keras.metrics.Mean(name="train_loss")
-    train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(
-        name="train_accuracy"
-    )
+    epochs = 15
+    for e in range(epochs):
+        print(f"Epoch {e}...", end=" ", flush=True)
+        model.train()
+        train_losses = []
+        train_correct = 0
+        train_total = 0
+        for x, y in train_dl:
+            optimiser.zero_grad()
+            out = model(x)
+            loss = loss_criterion(out, y)
+            loss.backward()
+            optimiser.step()
+            train_losses.append(loss.item())
+            train_correct += torch.sum(torch.argmax(out, dim=-1) == y).item()
+            train_total += len(y)
 
-    test_loss = tf.keras.metrics.Mean(name="test_loss")
-    test_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(
-        name="test_accuracy"
-    )
+        model.eval()
+        test_losses = []
+        test_correct = 0
+        test_total = 0
+        with torch.no_grad():
+            for x, y in test_dl:
+                out = model(x)
+                loss = loss_criterion(out, y)
+                test_losses.append(loss.item())
+                test_correct += torch.sum(
+                    torch.argmax(out, dim=-1) == y
+                ).item()
+                test_total += len(y)
 
-    EPOCHS = 12
-    for epoch in range(EPOCHS):
-        # Reset the metrics at the start of the next epoch
-        train_loss.reset_states()
-        train_accuracy.reset_states()
-        test_loss.reset_states()
-        test_accuracy.reset_states()
-
-        for images, labels in train_ds:
-            train_step(images, labels)
-
-        for test_images, test_labels in test_ds:
-            test_step(test_images, test_labels)
-
-        template = "Epoch {}, Loss: {}, Accuracy: {}, Test Loss: {}, Test Accuracy: {}"
         print(
-            template.format(
-                epoch + 1,
-                train_loss.result(),
-                train_accuracy.result() * 100,
-                test_loss.result(),
-                test_accuracy.result() * 100,
-            )
+            f"Train Loss: {np.mean(train_losses):.3f} "
+            f"Train Acc: {train_correct / train_total:.3f} "
+            f"Test Loss: {np.mean(test_losses):.3f} "
+            f"Test Acc: {test_correct / test_total:.3f} "
         )
 
-    tf.saved_model.save(model, "./model")
+    torch.save(model.state_dict(), "./model/cnn_aug.pt")
