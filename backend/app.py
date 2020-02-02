@@ -16,10 +16,6 @@ app = Flask(__name__)
 CORS(app)
 
 
-IMG_HEIGHT = 28
-IMG_WIDTH = 28
-
-
 def convert_img_data(base64_encoded_img_str):
     img_bytes = str.encode(base64_encoded_img_str)
     return base64.decodebytes(img_bytes)
@@ -31,18 +27,13 @@ def predict():
     if encoded_str is None or not isinstance(encoded_str, str):
         return "Bad Format", 400
 
-    print(encoded_str)
     encoded_img = convert_img_data(encoded_str)
     with open("imageToSave.png", "wb") as fh:
         fh.write(encoded_img)
 
-    # Decode and convert to greyscale
+    # Decode and convert to greyscale. All information is in the alpha channel
     img = Image.open(Image.io.BytesIO(encoded_img)).getchannel("A")
-    print(np.asarray(img).shape)
-    # img = img.resize((IMG_HEIGHT, IMG_WIDTH))
-    # img.save("imageToSave28.png", format="png")
-    # img = np.asarray(img)
-    # img = preprocess_predict(img)
+    img = np.asarray(img)
     pred = get_prediction(model, img)
     return {"prediction": pred}, 200
 
