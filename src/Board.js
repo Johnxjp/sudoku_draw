@@ -3,6 +3,7 @@ import Square from "./Square";
 import CanvasDraw from "react-canvas-draw";
 import { Button } from "./BoardButtons";
 import { deepCopyArray } from "./Utils";
+import { ErrorMessage, DrawingError } from "./ErrorMessage";
 
 import "./Board.css";
 import "./Canvas.css";
@@ -39,7 +40,8 @@ export default class Board extends React.Component {
       canvas: React.createRef(),
       initialBoard: [],
       isSolved: null,
-      invalidCell: null
+      invalidCell: null,
+      errorType: DrawingError.NO_ERROR
     };
   }
 
@@ -105,7 +107,18 @@ export default class Board extends React.Component {
     return [x, y];
   }
 
-  evaluate() {
+  canvasClear() {
+    this.setState({ errorType: DrawingError.NO_ERROR });
+    this.canvas.clear();
+  }
+
+  canvasUndo() {
+    this.setState({ errorType: DrawingError.NO_ERROR });
+    this.canvas.undo();
+  }
+
+  canvasEvaluate() {
+    this.setState({ errorType: DrawingError.NO_ERROR });
     const lines = this.canvas.lines;
     if (lines.length > 0) {
       const context = this.canvas.ctx;
@@ -113,19 +126,21 @@ export default class Board extends React.Component {
       this.getPrediction(base64Data)
         .then(data => {
           const prediction = data.prediction;
-          if (prediction < 0) {
+          if (prediction <= 0) {
             console.log("Couldn't understand input");
-          } else if (prediction === 0) {
-            console.log("Not a valid value");
+            this.setState({ errorType: DrawingError.INVALID_PREDICTION });
           } else {
             console.log("Predicted value", prediction);
             const [x, y] = this.getBoardCoords(this.state.selectedSquare);
             const board = this.state.board;
             board[x][y] = prediction;
-            this.setState({ board });
+            this.setState({ board, errorType: DrawingError.NO_ERROR });
           }
         })
-        .catch(err => console.log(err));
+        .catch(err => {
+          this.setState({ errorType: DrawingError.ERROR_FROM_SERVER });
+          console.log(err);
+        });
     } else {
       return null;
     }
@@ -304,28 +319,31 @@ export default class Board extends React.Component {
           </div>
         </div>
         <div id="canvas-container">
-          <CanvasDraw
-            {...canvasProps}
-            className="canvas"
-            ref={canvas => {
-              this.canvas = canvas;
-            }}
-          />
+          <div id="drawing-section">
+            <CanvasDraw
+              {...canvasProps}
+              className="canvas"
+              ref={canvas => {
+                this.canvas = canvas;
+              }}
+            />
+            <ErrorMessage error={this.state.errorType} />
+          </div>
           <div id="canvas-btns">
             <Button
               className="canvas-btn"
               text="Clear Canvas"
-              onClick={() => this.canvas.clear()}
+              onClick={() => this.canvasClear()}
             />
             <Button
               className="canvas-btn"
               text="Undo"
-              onClick={() => this.canvas.undo()}
+              onClick={() => this.canvasUndo()}
             />
             <Button
               className="canvas-btn"
               text="Submit"
-              onClick={() => this.evaluate()}
+              onClick={() => this.canvasEvaluate()}
             />
           </div>
         </div>
