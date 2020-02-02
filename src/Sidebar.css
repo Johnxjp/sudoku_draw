@@ -32,4 +32,5 @@ a:visited {
 a {
   text-decoration: underline;
   color: orange;
+  font-weight: 500;
 }

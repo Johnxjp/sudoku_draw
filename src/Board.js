@@ -1,7 +1,7 @@
 import React from "react";
 import Square from "./Square";
 import CanvasDraw from "react-canvas-draw";
-import { SolveButton, ResetButton, CheckButton } from "./BoardButtons";
+import { Button } from "./BoardButtons";
 import { deepCopyArray } from "./Utils";
 
 import "./Board.css";
@@ -264,6 +264,13 @@ export default class Board extends React.Component {
     this.setState({ isSolved: true, invalidCell: null });
   }
 
+  clearSquareClick() {
+    const [x, y] = this.getBoardCoords(this.state.selectedSquare);
+    const board = this.state.board;
+    board[x][y] = 0;
+    this.setState({ board });
+  }
+
   render() {
     console.log(this.state);
     console.table(canvasProps);
@@ -274,9 +281,26 @@ export default class Board extends React.Component {
             <tbody>{this.drawBoard(this.state.board)}</tbody>
           </table>
           <div id="action-btns">
-            <CheckButton onClick={() => this.checkButtonClick()} />
-            <ResetButton onClick={() => this.resetClick()} />
-            <SolveButton onClick={() => this.solveClick()} />
+            <Button
+              className="board-btn"
+              text="Clear Cell"
+              onClick={() => this.clearSquareClick()}
+            />
+            <Button
+              className="board-btn"
+              text="Check"
+              onClick={() => this.checkButtonClick()}
+            />
+            <Button
+              className="board-btn"
+              text="Reset"
+              onClick={() => this.resetClick()}
+            />
+            <Button
+              className="board-btn"
+              text="Solve"
+              onClick={() => this.solveClick()}
+            />
           </div>
         </div>
         <div id="canvas-container">
@@ -287,9 +311,23 @@ export default class Board extends React.Component {
               this.canvas = canvas;
             }}
           />
-          <button onClick={() => this.canvas.clear()}>Clear</button>
-          <button onClick={() => this.canvas.undo()}>Undo</button>
-          <button onClick={() => this.evaluate()}>Submit</button>
+          <div id="canvas-btns">
+            <Button
+              className="canvas-btn"
+              text="Clear Canvas"
+              onClick={() => this.canvas.clear()}
+            />
+            <Button
+              className="canvas-btn"
+              text="Undo"
+              onClick={() => this.canvas.undo()}
+            />
+            <Button
+              className="canvas-btn"
+              text="Submit"
+              onClick={() => this.evaluate()}
+            />
+          </div>
         </div>
       </>
     );
