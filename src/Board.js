@@ -21,12 +21,12 @@ const TEST_BOARD = [
 ];
 
 const canvasProps = {
-  brushRadius: 18,
+  brushRadius: 16,
   lazyRadius: 1,
   hideGrid: true,
   brushColor: "black",
-  canvasWidth: 196,
-  canvasHeight: 196
+  canvasWidth: 224,
+  canvasHeight: 224
 };
 
 export default class Board extends React.Component {
@@ -65,7 +65,7 @@ export default class Board extends React.Component {
 
   onSquareClick(id) {
     console.log("Chosen square", id);
-    if (id !== this.state.selectedSquare) {
+    if (id !== this.state.selectedSquare || id === this.state.invalidCell) {
       // Clear canvas
       this.canvas.clear();
     }
@@ -222,12 +222,11 @@ export default class Board extends React.Component {
     const thisCellId = x * BOARD_SIZE + y;
     if (cellValue === 0) return false;
     for (let k = 0; k < BOARD_SIZE; k++) {
-      if (
-        x * BOARD_SIZE + k === thisCellId ||
-        k * BOARD_SIZE + y === thisCellId
-      )
-        continue;
-      if (board[x][k] === cellValue || board[k][y] === cellValue) {
+      if (x * BOARD_SIZE + k !== thisCellId && board[x][k] === cellValue) {
+        return false;
+      }
+
+      if (k * BOARD_SIZE + y !== thisCellId && board[k][y] === cellValue) {
         return false;
       }
     }
@@ -254,6 +253,7 @@ export default class Board extends React.Component {
         const id = i * BOARD_SIZE + j;
         if (
           !this.state.fixedCells.includes(id) &&
+          board[i][j] !== 0 &&
           !this.validMove(board, i, j)
         ) {
           this.setState({ isSolved: false, invalidCell: id });
@@ -266,6 +266,7 @@ export default class Board extends React.Component {
 
   render() {
     console.log(this.state);
+    console.table(canvasProps);
     return (
       <>
         <div id="board">
