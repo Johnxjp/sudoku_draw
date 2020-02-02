@@ -11,3 +11,7 @@ table {
   border-spacing: 0em;
   border: 2px black solid;
 }
+
+#action-btns {
+  display: flex;
+}

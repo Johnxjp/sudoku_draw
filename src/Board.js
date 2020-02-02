@@ -1,6 +1,8 @@
 import React from "react";
 import Square from "./Square";
 import CanvasDraw from "react-canvas-draw";
+import { SolveButton, ResetButton, CheckButton } from "./BoardButtons";
+import { deepCopyArray } from "./Utils";
 
 import "./Board.css";
 import "./Canvas.css";
@@ -34,7 +36,10 @@ export default class Board extends React.Component {
       board: [],
       selectedSquare: null,
       fixedCells: [],
-      canvas: React.createRef()
+      canvas: React.createRef(),
+      initialBoard: [],
+      isSolved: null,
+      invalidCell: null
     };
   }
 
@@ -43,15 +48,18 @@ export default class Board extends React.Component {
   }
 
   initialiseBoard() {
-    const flatBoard = TEST_BOARD.flat();
+    const board = Array.from(TEST_BOARD);
+    const boardCopy = deepCopyArray(board);
+    const flatBoard = board.flat();
     const fixedCells = flatBoard
       .map((val, index) => (val === 0 ? null : index))
       .filter(val => val !== null);
     const firstEmpty = flatBoard.findIndex(el => el === 0);
     this.setState({
-      board: TEST_BOARD,
+      board: board,
       fixedCells,
-      selectedSquare: firstEmpty
+      selectedSquare: firstEmpty,
+      initialBoard: boardCopy
     });
   }
 
@@ -61,7 +69,7 @@ export default class Board extends React.Component {
       // Clear canvas
       this.canvas.clear();
     }
-    this.setState({ selectedSquare: id });
+    this.setState({ selectedSquare: id, isSolved: null, invalidCell: null });
   }
 
   drawBoard(boardData) {
@@ -74,6 +82,7 @@ export default class Board extends React.Component {
               <Square
                 id={id}
                 value={digit === 0 ? null : digit}
+                isInvalid={this.state.invalidCell === id}
                 isSelected={this.state.selectedSquare === id}
                 onClick={id => this.onSquareClick(id)}
                 isFixed={this.state.fixedCells.includes(id)}
@@ -98,8 +107,7 @@ export default class Board extends React.Component {
 
   evaluate() {
     const lines = this.canvas.lines;
-    // TODO: Remove geq
-    if (lines.length >= 0) {
+    if (lines.length > 0) {
       const context = this.canvas.ctx;
       const base64Data = this.getbase64PNG(context);
       this.getPrediction(base64Data)
@@ -124,11 +132,6 @@ export default class Board extends React.Component {
   }
 
   async getPrediction(base64Data) {
-    // return new Promise((resolve, _) => {
-    //   const val = getRandomInt(0, BOARD_SIZE + 1);
-    //   console.log("Generated Num", val);
-    //   resolve({ value: val });
-    // });
     const url = "http://localhost:3001/predict";
     const response = await fetch(url, {
       method: "POST",
@@ -141,12 +144,140 @@ export default class Board extends React.Component {
     return await response.json();
   }
 
+  resetClick() {
+    console.log("Reset");
+    const initialBoard = deepCopyArray(this.state.initialBoard);
+    this.setState({ board: initialBoard, isSolved: null, invalidCell: null });
+  }
+
+  getCandidates(board, x, y) {
+    const candidates = Array(BOARD_SIZE).fill(true);
+    // Check row and col
+    for (let k = 0; k < BOARD_SIZE; k++) {
+      if (board[x][k] !== 0) {
+        const val = board[x][k];
+        candidates[val - 1] = false; // 0-vased index
+      }
+      if (board[k][y] !== 0) {
+        const val = board[k][y];
+        candidates[val - 1] = false; // 0-vased index
+      }
+    }
+    // Check box - round down to nearest multiple of 3
+    const startRow = x - (x % 3);
+    const startCol = y - (y % 3);
+    for (let row = startRow; row < startRow + 3; row++) {
+      for (let col = startCol; col < startCol + 3; col++) {
+        if (board[row][col] !== 0) {
+          const val = board[row][col];
+          candidates[val - 1] = false;
+        }
+      }
+    }
+    let indexes = [];
+    candidates.forEach((val, index) => {
+      if (val) {
+        indexes.push(index + 1);
+      }
+    });
+    return indexes;
+  }
+
+  solveClick() {
+    const board = this.state.board;
+    let [stack, i, j, candidates] = [[], 0, 0, null];
+    while (i < BOARD_SIZE && j < BOARD_SIZE) {
+      if (board[i][j] === 0) {
+        if (candidates === null) {
+          candidates = this.getCandidates(board, i, j);
+        }
+
+        if (candidates.length === 0) {
+          if (stack.length === 0) {
+            return false;
+          }
+
+          [i, j, candidates] = stack.pop();
+          // Reset and try again
+          board[i][j] = 0;
+          continue;
+        } else {
+          board[i][j] = candidates.pop();
+          stack.push([i, j, candidates]);
+          candidates = null;
+        }
+      }
+      j = (j + 1) % BOARD_SIZE;
+      if (j === 0) {
+        i += 1;
+      }
+    }
+    this.setState({ board });
+    return true;
+  }
+
+  validMove(board, x, y) {
+    // Check row and col
+    const cellValue = board[x][y];
+    const thisCellId = x * BOARD_SIZE + y;
+    if (cellValue === 0) return false;
+    for (let k = 0; k < BOARD_SIZE; k++) {
+      if (
+        x * BOARD_SIZE + k === thisCellId ||
+        k * BOARD_SIZE + y === thisCellId
+      )
+        continue;
+      if (board[x][k] === cellValue || board[k][y] === cellValue) {
+        return false;
+      }
+    }
+    // Check box - round down to nearest multiple of 3
+    const startRow = x - (x % 3);
+    const startCol = y - (y % 3);
+    for (let row = startRow; row < startRow + 3; row++) {
+      for (let col = startCol; col < startCol + 3; col++) {
+        if (
+          row * BOARD_SIZE + col !== thisCellId &&
+          board[row][col] === cellValue
+        ) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  checkButtonClick() {
+    const board = this.state.board;
+    for (let i = 0; i < BOARD_SIZE; i++) {
+      for (let j = 0; j < BOARD_SIZE; j++) {
+        const id = i * BOARD_SIZE + j;
+        if (
+          !this.state.fixedCells.includes(id) &&
+          !this.validMove(board, i, j)
+        ) {
+          this.setState({ isSolved: false, invalidCell: id });
+          return;
+        }
+      }
+    }
+    this.setState({ isSolved: true, invalidCell: null });
+  }
+
   render() {
+    console.log(this.state);
     return (
       <>
-        <table>
-          <tbody>{this.drawBoard(this.state.board)}</tbody>
-        </table>
+        <div id="board">
+          <table>
+            <tbody>{this.drawBoard(this.state.board)}</tbody>
+          </table>
+          <div id="action-btns">
+            <CheckButton onClick={() => this.checkButtonClick()} />
+            <ResetButton onClick={() => this.resetClick()} />
+            <SolveButton onClick={() => this.solveClick()} />
+          </div>
+        </div>
         <div id="canvas-container">
           <CanvasDraw
             {...canvasProps}
