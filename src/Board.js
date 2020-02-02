@@ -67,10 +67,6 @@ export default class Board extends React.Component {
 
   onSquareClick(id) {
     console.log("Chosen square", id);
-    if (id !== this.state.selectedSquare || id === this.state.invalidCell) {
-      // Clear canvas
-      this.canvas.clear();
-    }
     this.setState({ selectedSquare: id, isSolved: null, invalidCell: null });
   }
 
