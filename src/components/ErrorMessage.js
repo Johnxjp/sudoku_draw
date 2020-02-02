@@ -1,5 +1,6 @@
 import React from "react";
-import "./ErrorMessage.css";
+
+import "../style/ErrorMessage.css";
 
 const DrawingError = {
   NO_ERROR: 0,

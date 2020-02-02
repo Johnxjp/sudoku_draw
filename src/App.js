@@ -1,7 +1,8 @@
 import React from "react";
-import Board from "./Board";
+import Board from "./components/Board";
+import Sidebar from "./components/Sidebar";
+
 import "./App.css";
-import Sidebar from "./Sidebar";
 
 export default function App() {
   return (
@@ -9,7 +10,6 @@ export default function App() {
       <Sidebar />
       <div id="main">
         <Board />
-        {/* <Canvas /> */}
       </div>
     </div>
   );

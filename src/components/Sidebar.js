@@ -1,7 +1,7 @@
-//Copyright (c) 2016-2017 Shafeen Tejani. Released under GPLv3.
 import React from "react";
-import ExampleImage from "./assets/example_input.png";
-import "./Sidebar.css";
+import ExampleImage from "../assets/example_input.png";
+
+import "../style/Sidebar.css";
 
 const Sidebar = () => (
   <aside className="sidebar">

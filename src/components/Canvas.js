@@ -1,9 +1,10 @@
 import React from "react";
 import CanvasDraw from "react-canvas-draw";
-import Button from "../BoardButtons";
-import { ErrorMessage, DrawingError } from "../ErrorMessage";
+import Button from "./BoardButtons";
+import { ErrorMessage, DrawingError } from "./ErrorMessage";
 import { parseBase64String, predictDigit } from "../Utils";
-import "./Canvas.css";
+
+import "../style/Canvas.css";
 
 const canvasProps = {
   brushRadius: 16,

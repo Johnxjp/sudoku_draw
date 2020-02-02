@@ -1,10 +1,10 @@
 import React from "react";
 import Square from "./Square";
 import Button from "./BoardButtons";
-import { deepCopyArray, boardIdToCoords } from "./Utils";
-import Canvas from "./components/Canvas";
+import { deepCopyArray, boardIdToCoords } from "../Utils";
+import Canvas from "./Canvas";
 
-import "./Board.css";
+import "../style/Board.css";
 
 const BOARD_SIZE = 9;
 const INITIAL_BOARD = [
