@@ -1,5 +1,5 @@
 import torch
-from torch_train import CNN
+from train import CNN
 from flask import Flask, request
 from flask_cors import CORS
 from PIL import Image
