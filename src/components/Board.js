@@ -37,55 +37,64 @@ export default class Board extends React.Component {
     this.initialiseBoard();
   }
 
-  initialiseBoard() {
-    const board = Array.from(INITIAL_BOARD);
-    const boardCopy = deepCopyArray(board);
-    const flatBoard = board.flat();
-    const fixedCells = flatBoard
+  filledCells(flatBoard) {
+    return flatBoard
       .map((val, index) => (val === 0 ? null : index))
       .filter(val => val !== null);
-    const firstEmpty = flatBoard.findIndex(el => el === 0);
+  }
+
+  initialiseBoard() {
+    const flatBoard = INITIAL_BOARD.flat();
     this.setState({
-      board: board,
-      fixedCells,
-      selectedSquare: firstEmpty,
-      initialBoard: boardCopy
+      board: INITIAL_BOARD,
+      fixedCells: this.filledCells(flatBoard),
+      selectedSquare: flatBoard.findIndex(el => el === 0),
+      initialBoard: deepCopyArray(INITIAL_BOARD)
     });
   }
 
-  onSquareClick(id) {
+  setSelectedSquare(id) {
     console.log("Chosen square", id);
     this.setState({ selectedSquare: id, isSolved: null, invalidCell: null });
   }
 
-  drawBoard(boardData) {
-    return boardData.map((row, index_i) => {
-      return (
-        <tr>
-          {row.map((digit, index_j) => {
-            const id = index_i * BOARD_SIZE + index_j;
-            return (
-              <Square
-                id={id}
-                value={digit === 0 ? null : digit}
-                isInvalid={this.state.invalidCell === id}
-                isSelected={this.state.selectedSquare === id}
-                onClick={id => this.onSquareClick(id)}
-                isFixed={this.state.fixedCells.includes(id)}
-              />
-            );
-          })}
-        </tr>
-      );
-    });
+  renderRow(row, rowIndex) {
+    return (
+      <tr>
+        {row.map((digit, colIndex) => {
+          const id = rowIndex * BOARD_SIZE + colIndex;
+          return (
+            <Square
+              id={id}
+              value={digit === 0 ? null : digit}
+              isInvalid={this.state.invalidCell === id}
+              isSelected={this.state.selectedSquare === id}
+              setSelectedSquare={id => this.setSelectedSquare(id)}
+              isFixed={this.state.fixedCells.includes(id)}
+            />
+          );
+        })}
+      </tr>
+    );
+  }
+
+  renderBoard() {
+    const board = this.state.board;
+    return (
+      <table>
+        <tbody>
+          {board.map((row, rowIndex) => this.renderRow(row, rowIndex))}
+        </tbody>
+      </table>
+    );
   }
 
   resetClick() {
-    console.log("Reset");
     const initialBoard = deepCopyArray(this.state.initialBoard);
     this.setState({ board: initialBoard, isSolved: null, invalidCell: null });
   }
 
+  // TODO: Refactor this out
   getCandidates(board, x, y) {
     const candidates = Array(BOARD_SIZE).fill(true);
     // Check row and col
@@ -200,7 +209,7 @@ export default class Board extends React.Component {
     this.setState({ isSolved: true, invalidCell: null });
   }
 
-  updateSquare(value) {
+  updateSelectedSquare(value) {
     const [x, y] = boardIdToCoords(this.state.selectedSquare);
     const board = this.state.board;
     board[x][y] = value;
@@ -212,14 +221,12 @@ export default class Board extends React.Component {
     return (
       <>
         <div id="board">
-          <table>
-            <tbody>{this.drawBoard(this.state.board)}</tbody>
-          </table>
+          {this.renderBoard()}
           <div id="action-btns">
             <Button
               className="board-btn"
               text="Clear Cell"
-              onClick={() => this.updateSquare(0)}
+              onClick={() => this.updateSelectedSquare(0)}
             />
             <Button
               className="board-btn"
@@ -238,7 +245,7 @@ export default class Board extends React.Component {
             />
           </div>
         </div>
-        <Canvas updateSquare={pred => this.updateSquare(pred)} />
+        <Canvas updateSquare={pred => this.updateSelectedSquare(pred)} />
       </>
     );
   }

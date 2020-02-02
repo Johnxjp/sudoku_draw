@@ -13,7 +13,7 @@ export default function Square(props) {
   return (
     <td
       className={setClass(props.isFixed, props.isSelected, props.isInvalid)}
-      onClick={() => (props.isFixed ? null : props.onClick(props.id))}
+      onClick={() => (props.isFixed ? null : props.setSelectedSquare(props.id))}
     >
       {props.value}
     </td>

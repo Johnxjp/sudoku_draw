@@ -7,7 +7,7 @@
   height: 100vh;
   min-width: 350px;
   background-color: #29b6f6;
-  color: whitesmoke;
+  color: #1a2124;
   border-right: 1px black solid;
   font-size: small;
 }
@@ -31,6 +31,6 @@ a:visited {
 
 a {
   text-decoration: underline;
-  color: orange;
-  font-weight: 500;
+  color: whitesmoke;
+  font-weight: bold;
 }
