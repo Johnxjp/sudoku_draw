@@ -5,4 +5,4 @@ const Button = props => {
   return <button {...props}>{props.text}</button>;
 };
 
-export { Button };
+export default Button;

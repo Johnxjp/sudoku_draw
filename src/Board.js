@@ -1,15 +1,13 @@
 import React from "react";
 import Square from "./Square";
-import CanvasDraw from "react-canvas-draw";
-import { Button } from "./BoardButtons";
-import { deepCopyArray } from "./Utils";
-import { ErrorMessage, DrawingError } from "./ErrorMessage";
+import Button from "./BoardButtons";
+import { deepCopyArray, boardIdToCoords } from "./Utils";
+import Canvas from "./components/Canvas";
 
 import "./Board.css";
-import "./Canvas.css";
 
 const BOARD_SIZE = 9;
-const TEST_BOARD = [
+const INITIAL_BOARD = [
   [5, 3, 0, 0, 7, 0, 0, 0, 0],
   [6, 0, 0, 1, 9, 5, 0, 0, 0],
   [0, 9, 8, 0, 0, 0, 0, 6, 0],
@@ -21,15 +19,6 @@ const TEST_BOARD = [
   [0, 0, 0, 0, 8, 0, 0, 7, 9]
 ];
 
-const canvasProps = {
-  brushRadius: 16,
-  lazyRadius: 1,
-  hideGrid: true,
-  brushColor: "black",
-  canvasWidth: 224,
-  canvasHeight: 224
-};
-
 export default class Board extends React.Component {
   constructor(props) {
     super(props);
@@ -40,8 +29,7 @@ export default class Board extends React.Component {
       canvas: React.createRef(),
       initialBoard: [],
       isSolved: null,
-      invalidCell: null,
-      errorType: DrawingError.NO_ERROR
+      invalidCell: null
     };
   }
 
@@ -50,7 +38,7 @@ export default class Board extends React.Component {
   }
 
   initialiseBoard() {
-    const board = Array.from(TEST_BOARD);
+    const board = Array.from(INITIAL_BOARD);
     const boardCopy = deepCopyArray(board);
     const flatBoard = board.flat();
     const fixedCells = flatBoard
@@ -90,69 +78,6 @@ export default class Board extends React.Component {
         </tr>
       );
     });
-  }
-
-  getbase64PNG(context) {
-    let base64Data = context.drawing.canvas.toDataURL();
-    return base64Data.match(/base64,(.*)/)[1];
-  }
-
-  getBoardCoords(squareId) {
-    const x = parseInt(squareId / BOARD_SIZE);
-    const y = squareId % BOARD_SIZE;
-    return [x, y];
-  }
-
-  canvasClear() {
-    this.setState({ errorType: DrawingError.NO_ERROR });
-    this.canvas.clear();
-  }
-
-  canvasUndo() {
-    this.setState({ errorType: DrawingError.NO_ERROR });
-    this.canvas.undo();
-  }
-
-  canvasEvaluate() {
-    this.setState({ errorType: DrawingError.NO_ERROR });
-    const lines = this.canvas.lines;
-    if (lines.length > 0) {
-      const context = this.canvas.ctx;
-      const base64Data = this.getbase64PNG(context);
-      this.getPrediction(base64Data)
-        .then(data => {
-          const prediction = data.prediction;
-          if (prediction <= 0) {
-            console.log("Couldn't understand input");
-            this.setState({ errorType: DrawingError.INVALID_PREDICTION });
-          } else {
-            console.log("Predicted value", prediction);
-            const [x, y] = this.getBoardCoords(this.state.selectedSquare);
-            const board = this.state.board;
-            board[x][y] = prediction;
-            this.setState({ board, errorType: DrawingError.NO_ERROR });
-          }
-        })
-        .catch(err => {
-          this.setState({ errorType: DrawingError.ERROR_FROM_SERVER });
-          console.log(err);
-        });
-    } else {
-      return null;
-    }
-  }
-
-  async getPrediction(base64Data) {
-    const url = "http://localhost:3001/predict";
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "http://localhost/3001"
-      },
-      body: JSON.stringify({ data: base64Data })
-    });
-    return await response.json();
   }
 
   resetClick() {
@@ -275,16 +200,15 @@ export default class Board extends React.Component {
     this.setState({ isSolved: true, invalidCell: null });
   }
 
-  clearSquareClick() {
-    const [x, y] = this.getBoardCoords(this.state.selectedSquare);
+  updateSquare(value) {
+    const [x, y] = boardIdToCoords(this.state.selectedSquare);
     const board = this.state.board;
-    board[x][y] = 0;
+    board[x][y] = value;
     this.setState({ board });
   }
 
   render() {
     console.log(this.state);
-    console.table(canvasProps);
     return (
       <>
         <div id="board">
@@ -295,7 +219,7 @@ export default class Board extends React.Component {
             <Button
               className="board-btn"
               text="Clear Cell"
-              onClick={() => this.clearSquareClick()}
+              onClick={() => this.updateSquare(0)}
             />
             <Button
               className="board-btn"
@@ -314,35 +238,7 @@ export default class Board extends React.Component {
             />
           </div>
         </div>
-        <div id="canvas-container">
-          <div id="drawing-section">
-            <CanvasDraw
-              {...canvasProps}
-              className="canvas"
-              ref={canvas => {
-                this.canvas = canvas;
-              }}
-            />
-            <ErrorMessage error={this.state.errorType} />
-          </div>
-          <div id="canvas-btns">
-            <Button
-              className="canvas-btn"
-              text="Clear Canvas"
-              onClick={() => this.canvasClear()}
-            />
-            <Button
-              className="canvas-btn"
-              text="Undo"
-              onClick={() => this.canvasUndo()}
-            />
-            <Button
-              className="canvas-btn"
-              text="Submit"
-              onClick={() => this.canvasEvaluate()}
-            />
-          </div>
-        </div>
+        <Canvas updateSquare={pred => this.updateSquare(pred)} />
       </>
     );
   }
