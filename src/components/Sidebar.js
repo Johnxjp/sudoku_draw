@@ -6,19 +6,27 @@ import "../style/Sidebar.css";
 const Sidebar = () => (
   <aside className="sidebar">
     <h1 id="app-title">Sudoku Draw</h1>
-    <p>
-      Sudoku Draw is an implementation of Sudoku with a slight spin. Instead of
-      typing digits in, you must draw the numbers using the canvas.{" "}
+    <p style={{ margin: 0 }}>
       <em>
-        Simply click on the cell you want to fill and draw the image in the
-        canvas
+        John Lingi,{" "}
+        <a
+          href="https://github.com/Johnxjp/sudoku_draw.git"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Github
+        </a>
       </em>
-      .
+    </p>
+    <p>
+      Sudoku Draw is an implementation of Sudoku where digits must be hand-drawn
+      instead of typed.{" "}
+      <u>Simply select a cell, draw an image in the canvas and submit.</u>
     </p>
     <h2 className="app-subtitle">How it works?</h2>
     <p>
-      A neural network was buit to identify hand-drawn digits. It was trained on
-      the{" "}
+      A neural network is used to identify the hand-drawn digits. It was trained
+      on the{" "}
       <a
         href="http://yann.lecun.com/exdb/mnist/"
         target="_blank"
@@ -26,28 +34,31 @@ const Sidebar = () => (
       >
         MNIST
       </a>{" "}
-      dataset using{" "}
+      dataset using the{" "}
       <a href="https://pytorch.org/" target="_blank" rel="noopener noreferrer">
         PyTorch
-      </a>
-      .
+      </a>{" "}
+      framework.
     </p>
     <p>
-      The model comprises a single convolutional layer followed by two linear
-      layers. A dropout layer is also added before the penultimate linear layer.
+      The model is a simple CNN with one convolutional layer followed by two
+      linear layers. A dropout layer is also added before the penultimate linear
+      layer.
     </p>
     <p>
-      The MNIST dataset is extremely well curated - the digits in the dataset
-      are centered and large. Things are not quite as nice in reality. So to
-      help recognition, we first preprocess the canvas image by centering the
-      input. In addition, dropout is <b>kept on</b> at inference time and the
-      input is passed through the model more than once (in fact, 100 times).
-      Because dropout is kept on, each time the input is passed through the
-      model the softmax probabilities will be different. If the input is
-      well-recognised, the model should output the right class most of the time,
-      otherwise the predictions will be mixed. This is in effect can be used as
-      a measure of uncertainy which a threshold can be applied to. This
-      technique is known as{" "}
+      The MNIST dataset is extremely well curated - digits are centered and
+      often large. However, things are not so quite in reality. So to aid
+      recognition, the input is first preprocessed by centering and padding
+    </p>
+    <p>
+      Also, dropout is <b>kept on</b> at inference time and the input is passed
+      through the model more than once (in fact, 100 times). Each pass results
+      in a different softmax output, as dropout randomnly drops a subset of
+      neurons on each pass. In theory, if the input is well-recognised, the
+      right class should be predicted most of the time, otherwise the
+      predictions will be mixed. This is in effect a measure of uncertainy. In
+      this implementation, a certain prediction is when the model predicts the
+      same number over 80% of the time. This technique is known as{" "}
       <a
         href="https://arxiv.org/abs/1506.02142"
         target="_blank"
