@@ -1,5 +1,5 @@
 import torch
-from train import CNN
+from model import MNIST_CNN
 from flask import Flask, request
 from flask_cors import CORS
 from PIL import Image
@@ -8,7 +8,7 @@ import base64
 
 from predict import get_prediction
 
-model = CNN()
+model = MNIST_CNN()
 model.load_state_dict(torch.load("../model/cnn_aug.pt"))
 model.train()
 
@@ -28,8 +28,9 @@ def predict():
         return "Bad Format", 400
 
     encoded_img = convert_img_data(encoded_str)
-    with open("imageToSave.png", "wb") as fh:
-        fh.write(encoded_img)
+    # Save image locally
+    # with open("imageToSave.png", "wb") as fh:
+    #     fh.write(encoded_img)
 
     # Decode and convert to greyscale. All information is in the alpha channel
     img = Image.open(Image.io.BytesIO(encoded_img)).getchannel("A")

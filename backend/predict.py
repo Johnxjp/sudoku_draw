@@ -10,9 +10,9 @@ IMG_WIDTH = 28
 PADDING = 50
 
 
-def preprocess(grayscale_image: np.ndarray) -> Image:
+def preprocess(grayscale_img: np.ndarray) -> Image:
     """Center and crops grayscale image. Background is black"""
-    _, thresh = cv.threshold(grayscale_image, 127, 255, 0)
+    _, thresh = cv.threshold(grayscale_img, 127, 255, 0)
     contours, _ = cv.findContours(thresh, 1, 2)
 
     # select biggest area
@@ -20,7 +20,7 @@ def preprocess(grayscale_image: np.ndarray) -> Image:
     x, y, w, h = cv.boundingRect(contours[contour_id])
 
     # Crop and pad image to square
-    cropped_img = grayscale_image[y : y + h, x : x + w]
+    cropped_img = grayscale_img[y : y + h, x : x + w]
     largest_dim = max(cropped_img.shape)
     new_img = Image.fromarray(cropped_img)
 
@@ -31,38 +31,37 @@ def preprocess(grayscale_image: np.ndarray) -> Image:
     return new_img
 
 
-def to_tensor_and_normalise(image):
+def to_tensor_and_normalise(img):
     transform = transforms.Compose(
         [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
     )
-    return transform(image)
+    return transform(img)
 
 
-def mc_dropout_predictions(model, image, iterations=100):
+def mc_dropout_predictions(model, img, iterations=100):
     """
     Get class predictions with MC Dropout
     """
     model.train()
-    save_img = transforms.ToPILImage()(image)
-    save_img.save("imageToSave28.png", format="png")
-    images = image.repeat(iterations, 1, 1, 1)
-    print(images.size())
-    predictions = model(images)
+    # Save image locally
+    # save_img = transforms.ToPILImage()(image)
+    # save_img.save("imageToSave28.png", format="png")
+    imgs = img.repeat(iterations, 1, 1, 1)
+    predictions = model(imgs)
     classes = torch.argmax(predictions, axis=-1).squeeze()
-    print("Classes", classes.shape)
     return classes.numpy()
 
 
-def get_prediction(model, image) -> int:
+def get_prediction(model, img) -> int:
     """
     Returns single prediction from model
     """
     iterations = 100
     uncertainty_level = 0.8
     uncertain_prediction = -1
-    image = preprocess(image)
-    image = to_tensor_and_normalise(image)
-    predictions = mc_dropout_predictions(model, image, iterations)
+    img = preprocess(img)
+    img = to_tensor_and_normalise(img)
+    predictions = mc_dropout_predictions(model, img, iterations)
     print(predictions)
     unique, counts = np.unique(predictions, return_counts=True)
 
