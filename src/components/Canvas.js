@@ -41,12 +41,10 @@ export default class Canvas extends React.Component {
       predictDigit(base64ImageData)
         .then(response => {
           const prediction = response.prediction;
-          if (prediction <= 0) {
-            console.log("Couldn't understand input");
-            this.setState({ errorType: DrawingError.INVALID_PREDICTION });
-          } else {
-            console.log("Predicted value", prediction);
+          if (prediction > 0) {
             updateSquare(prediction);
+          } else {
+            this.setState({ errorType: DrawingError.INVALID_PREDICTION });
           }
         })
         .catch(() => {
