@@ -6,6 +6,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 import numpy as np
 
+from config import MODEL_FILE
 from model import MNIST_CNN
 
 
@@ -88,4 +89,4 @@ if __name__ == "__main__":
             f"Test Acc: {test_acc:.3f} "
         )
 
-    torch.save(model.state_dict(), "./model/cnn_aug.pt")
+    torch.save(model.state_dict(), MODEL_FILE)

@@ -7,9 +7,10 @@ import numpy as np
 import base64
 
 from predict import get_prediction
+from config import MODEL_FILE
 
 model = MNIST_CNN()
-model.load_state_dict(torch.load("../model/cnn_aug.pt"))
+model.load_state_dict(torch.load(MODEL_FILE))
 model.train()
 
 app = Flask(__name__)
