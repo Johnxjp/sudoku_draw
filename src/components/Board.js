@@ -1,7 +1,7 @@
 import React from "react";
 import Square from "./Square";
 import Button from "./BoardButtons";
-import { deepCopyArray, boardIdToCoords } from "../Utils";
+import { deepCopyArray } from "../Utils";
 import Canvas from "./Canvas";
 
 import "../style/Board.css";
@@ -28,7 +28,6 @@ export default class Board extends React.Component {
       fixedCells: [],
       canvas: React.createRef(),
       initialBoard: [],
-      isSolved: null,
       invalidCell: null
     };
   }
@@ -54,23 +53,32 @@ export default class Board extends React.Component {
   }
 
   setSelectedSquare(id) {
-    console.log("Chosen square", id);
-    this.setState({ selectedSquare: id, isSolved: null, invalidCell: null });
+    this.setState({ selectedSquare: id, invalidCell: null });
+  }
+
+  boardIdToCoords(squareId) {
+    const x = parseInt(squareId / BOARD_SIZE);
+    const y = squareId % BOARD_SIZE;
+    return [x, y];
+  }
+
+  coordsToBoardId(x, y) {
+    return x * BOARD_SIZE + y;
   }
 
   renderRow(row, rowIndex) {
     return (
       <tr>
         {row.map((digit, colIndex) => {
-          const id = rowIndex * BOARD_SIZE + colIndex;
+          const id = this.coordsToBoardId(rowIndex, colIndex);
           return (
             <Square
               id={id}
               value={digit === 0 ? null : digit}
               isInvalid={this.state.invalidCell === id}
               isSelected={this.state.selectedSquare === id}
-              setSelectedSquare={id => this.setSelectedSquare(id)}
               isFixed={this.state.fixedCells.includes(id)}
+              setSelectedSquare={id => this.setSelectedSquare(id)}
             />
           );
         })}
@@ -89,23 +97,25 @@ export default class Board extends React.Component {
     );
   }
 
-  resetClick() {
-    const initialBoard = deepCopyArray(this.state.initialBoard);
-    this.setState({ board: initialBoard, isSolved: null, invalidCell: null });
+  isEmptyCell(board, x, y) {
+    return board[x][y] === 0;
   }
 
-  // TODO: Refactor this out
   getCandidates(board, x, y) {
-    const candidates = Array(BOARD_SIZE).fill(true);
+    function deleteCandidate(board, i, j, candidates) {
+      const val = board[i][j];
+      candidates[val - 1] = false;
+      return candidates;
+    }
+
+    let candidates = Array(BOARD_SIZE).fill(true);
     // Check row and col
     for (let k = 0; k < BOARD_SIZE; k++) {
-      if (board[x][k] !== 0) {
-        const val = board[x][k];
-        candidates[val - 1] = false; // 0-vased index
+      if (!this.isEmptyCell(board, x, k)) {
+        candidates = deleteCandidate(board, x, k, candidates);
       }
-      if (board[k][y] !== 0) {
-        const val = board[k][y];
-        candidates[val - 1] = false; // 0-vased index
+      if (!this.isEmptyCell(board, k, y)) {
+        candidates = deleteCandidate(board, k, y, candidates);
       }
     }
     // Check box - round down to nearest multiple of 3
@@ -113,9 +123,8 @@ export default class Board extends React.Component {
     const startCol = y - (y % 3);
     for (let row = startRow; row < startRow + 3; row++) {
       for (let col = startCol; col < startCol + 3; col++) {
-        if (board[row][col] !== 0) {
-          const val = board[row][col];
-          candidates[val - 1] = false;
+        if (!this.isEmptyCell(board, row, col)) {
+          candidates = deleteCandidate(board, row, col, candidates);
         }
       }
     }
@@ -128,8 +137,7 @@ export default class Board extends React.Component {
     return indexes;
   }
 
-  solveClick() {
-    const board = this.state.board;
+  solveBoard(board) {
     let [stack, i, j, candidates] = [[], 0, 0, null];
     while (i < BOARD_SIZE && j < BOARD_SIZE) {
       if (board[i][j] === 0) {
@@ -139,7 +147,7 @@ export default class Board extends React.Component {
 
         if (candidates.length === 0) {
           if (stack.length === 0) {
-            return false;
+            return null;
           }
 
           [i, j, candidates] = stack.pop();
@@ -157,21 +165,20 @@ export default class Board extends React.Component {
         i += 1;
       }
     }
-    this.setState({ board });
-    return true;
+    return board;
   }
 
   validMove(board, x, y) {
     // Check row and col
     const cellValue = board[x][y];
-    const thisCellId = x * BOARD_SIZE + y;
+    const cellId = this.coordsToBoardId(x, y);
     if (cellValue === 0) return false;
     for (let k = 0; k < BOARD_SIZE; k++) {
-      if (x * BOARD_SIZE + k !== thisCellId && board[x][k] === cellValue) {
+      if (this.coordsToBoardId(x, k) !== cellId && board[x][k] === cellValue) {
         return false;
       }
 
-      if (k * BOARD_SIZE + y !== thisCellId && board[k][y] === cellValue) {
+      if (this.coordsToBoardId(k, y) !== cellId && board[k][y] === cellValue) {
         return false;
       }
     }
@@ -181,7 +188,7 @@ export default class Board extends React.Component {
     for (let row = startRow; row < startRow + 3; row++) {
       for (let col = startCol; col < startCol + 3; col++) {
         if (
-          row * BOARD_SIZE + col !== thisCellId &&
+          this.coordsToBoardId(row, col) !== cellId &&
           board[row][col] === cellValue
         ) {
           return false;
@@ -191,27 +198,38 @@ export default class Board extends React.Component {
     return true;
   }
 
-  checkButtonClick() {
+  solveClick() {
+    let board = deepCopyArray(this.state.board);
+    board = this.solveBoard(board);
+    if (board !== null) {
+      this.setState({ board });
+    }
+  }
+
+  resetClick() {
+    const initialBoard = deepCopyArray(this.state.initialBoard);
+    this.setState({ board: initialBoard, invalidCell: null });
+  }
+
+  checkClick() {
     const board = this.state.board;
     for (let i = 0; i < BOARD_SIZE; i++) {
       for (let j = 0; j < BOARD_SIZE; j++) {
-        const id = i * BOARD_SIZE + j;
-        if (
-          !this.state.fixedCells.includes(id) &&
-          board[i][j] !== 0 &&
-          !this.validMove(board, i, j)
-        ) {
-          this.setState({ isSolved: false, invalidCell: id });
+        const id = this.coordsToBoardId(i, j);
+        if (this.state.fixedCells.includes(id)) {
+          continue;
+        } else if (board[i][j] !== 0 && !this.validMove(board, i, j)) {
+          this.setState({ invalidCell: id });
           return;
         }
       }
     }
-    this.setState({ isSolved: true, invalidCell: null });
+    this.setState({ invalidCell: null });
   }
 
   updateSelectedSquare(value) {
-    const [x, y] = boardIdToCoords(this.state.selectedSquare);
-    const board = this.state.board;
+    const [x, y] = this.boardIdToCoords(this.state.selectedSquare);
+    const board = deepCopyArray(this.state.board);
     board[x][y] = value;
     this.setState({ board });
   }
@@ -231,7 +249,7 @@ export default class Board extends React.Component {
             <Button
               className="board-btn"
               text="Check"
-              onClick={() => this.checkButtonClick()}
+              onClick={() => this.checkClick()}
             />
             <Button
               className="board-btn"

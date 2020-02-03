@@ -2,13 +2,6 @@ export function deepCopyArray(arr) {
   return JSON.parse(JSON.stringify(arr));
 }
 
-export function boardIdToCoords(squareId) {
-  const board_size = 9;
-  const x = parseInt(squareId / board_size);
-  const y = squareId % board_size;
-  return [x, y];
-}
-
 export function parseBase64String(context) {
   let base64Data = context.drawing.canvas.toDataURL();
   return base64Data.match(/base64,(.*)/)[1];
