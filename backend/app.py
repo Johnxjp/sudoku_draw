@@ -30,14 +30,14 @@ def predict():
 
     encoded_img = convert_img_data(encoded_str)
     # Save image locally
-    # with open("imageToSave.png", "wb") as fh:
+    # with open("./backend/imageToSave.png", "wb") as fh:
     #     fh.write(encoded_img)
 
     # Decode and convert to greyscale. All information is in the alpha channel
     img = Image.open(Image.io.BytesIO(encoded_img)).getchannel("A")
     img = np.asarray(img)
-    pred = get_prediction(model, img)
-    return {"prediction": pred}, 200
+    pred, probabilities = get_prediction(model, img)
+    return {"prediction": pred, "probabilities": probabilities}, 200
 
 
 if __name__ == "__main__":

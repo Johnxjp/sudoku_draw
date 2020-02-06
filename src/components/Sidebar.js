@@ -48,7 +48,7 @@ const Sidebar = () => (
     <p>
       The MNIST dataset is extremely well curated - digits are centered and
       often large. However, things are not so quite in reality. So to aid
-      recognition, the input is first preprocessed by centering and padding
+      recognition, the input is first preprocessed by centering and padding.
     </p>
     <p>
       Also, dropout is <b>kept on</b> at inference time and the input is passed
@@ -56,9 +56,14 @@ const Sidebar = () => (
       in a different softmax output, as dropout randomnly drops a subset of
       neurons on each pass. In theory, if the input is well-recognised, the
       right class should be predicted most of the time, otherwise the
-      predictions will be mixed. This is in effect a measure of uncertainy. In
-      this implementation, a certain prediction is when the model predicts the
-      same number over 80% of the time. This technique is known as{" "}
+      predictions will be mixed. This is in effect a measure of uncertainy.
+    </p>
+    <p>
+      In this implementation, the model is 'certain' when it predicts the same
+      number over 80% of the time. 80% is quite conservative, and you can change
+      the threshold with the slider. The same image though may result in
+      different confidence. This is a consequence of dropout randomness. This
+      technique is known as{" "}
       <a
         href="https://arxiv.org/abs/1506.02142"
         target="_blank"
@@ -72,7 +77,7 @@ const Sidebar = () => (
     <p>
       While the probability of incorrect predictions are reduced with centering
       and using MC Dropout, try to draw the digits large and in the center.
-      Here's a good example.
+      Here's a good example:
     </p>
     <img src={ExampleImage} alt="" height="200px" />
   </aside>
