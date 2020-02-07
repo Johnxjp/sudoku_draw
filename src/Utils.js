@@ -9,12 +9,11 @@ export function parseBase64String(context) {
 
 
 export async function predictDigit(base64ImageData) {
-  const url = "http://localhost:3001/predict";
+  const url = "/predict";
   const response = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "http://localhost/3001"
     },
     body: JSON.stringify({ data: base64ImageData })
   });

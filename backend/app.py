@@ -45,7 +45,3 @@ def predict():
     img = np.asarray(img)
     pred, probabilities = get_prediction(model, img)
     return {"prediction": pred, "probabilities": probabilities}, 200
-
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=3001, debug=False)
