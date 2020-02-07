@@ -1,6 +1,6 @@
 import torch
 from model import MNIST_CNN
-from flask import Flask, request
+from flask import Flask, request, render_template
 from flask_cors import CORS
 from PIL import Image
 import numpy as np
@@ -13,13 +13,20 @@ model = MNIST_CNN()
 model.load_state_dict(torch.load(MODEL_FILE))
 model.train()
 
-app = Flask(__name__)
+app = Flask(
+    __name__, static_folder="../build/static", template_folder="../build",
+)
 CORS(app)
 
 
 def convert_img_data(base64_encoded_img_str):
     img_bytes = str.encode(base64_encoded_img_str)
     return base64.decodebytes(img_bytes)
+
+
+@app.route("/")
+def index():
+    return render_template("index.html")
 
 
 @app.route("/predict", methods=["POST"])
@@ -41,4 +48,4 @@ def predict():
 
 
 if __name__ == "__main__":
-    app.run(host="localhost", port=3001, debug=True)
+    app.run(host="0.0.0.0", port=3001, debug=False)

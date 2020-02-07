@@ -34,12 +34,18 @@ export default class Canvas extends React.Component {
   }
 
   clear() {
-    this.setState({ errorType: DrawingError.NO_ERROR });
+    this.setState({
+      errorType: DrawingError.NO_ERROR,
+      probabilities: this.zeroProbabilities()
+    });
     this.canvas.clear();
   }
 
   undo() {
-    this.setState({ errorType: DrawingError.NO_ERROR });
+    this.setState({
+      errorType: DrawingError.NO_ERROR,
+      probabilities: this.zeroProbabilities()
+    });
     this.canvas.undo();
   }
 

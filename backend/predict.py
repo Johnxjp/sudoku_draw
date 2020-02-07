@@ -62,17 +62,14 @@ def get_prediction(model, img) -> int:
     img = preprocess(img)
     img = to_tensor_and_normalise(img)
     predictions = mc_dropout_predictions(model, img, iterations)
-    print(predictions)
     prob_counts = get_prob_counts(predictions)
     max_count = 0
     best_digit = None
     for digit, count in prob_counts:
-        print(digit, count)
         if count > max_count:
             max_count = count
             best_digit = digit
 
-    print("N predicted", max_count)
     frac_predicted = max_count / iterations
     if frac_predicted >= uncertainty_level:
         return int(best_digit), prob_counts
