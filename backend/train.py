@@ -80,7 +80,7 @@ if __name__ == "__main__":
         train_losses, train_acc = train_step(
             model, train_dl, loss_criterion, optimiser
         )
-        test_losses, test_acc = test_step(model, train_dl, loss_criterion)
+        test_losses, test_acc = test_step(model, test_dl, loss_criterion)
 
         print(
             f"Train Loss: {np.mean(train_losses):.3f} "
